@@ -143,14 +143,20 @@ describe("database invariants", () => {
     const member = db.saveMember({ firstName: "Frozen", lastName: "Member", phone: "", email: "", dateOfBirth: "", gender: "", address: "", emergencyName: "", emergencyPhone: "", status: "active", notes: "", photoPath: null }, undefined, 1);
     const plan = db.savePlan({ name: "Monthly pause", description: "", durationMonths: 1, trainingHours: null, priceMinor: 1000 }, undefined, 1);
     const membership = db.assign(member, plan, "2026-09-01", false, 1);
+    const original = db.db.prepare("SELECT expires_at FROM memberships WHERE id=?").get(membership) as any;
     db.membershipAction(membership, "freeze", 1);
-    db.db.prepare("UPDATE memberships SET frozen_at=? WHERE id=?").run(new Date(Date.now() - 3 * 86400000).toISOString(), membership);
+    const frozenAt = new Date(Date.now() - 3 * 86400000).toISOString();
+    db.db.prepare("UPDATE memberships SET frozen_at=? WHERE id=?").run(frozenAt, membership);
+    db.db.prepare("UPDATE membership_freeze_periods SET frozen_at=? WHERE membership_id=? AND resumed_at IS NULL").run(frozenAt, membership);
     db.membershipAction(membership, "resume", 1);
-    expect(db.db.prepare("SELECT status,end_date,frozen_at FROM memberships WHERE id=?").get(membership)).toMatchObject({ status: "active", end_date: "2026-10-04", frozen_at: null });
+    const resumed = db.db.prepare("SELECT status,end_date,expires_at,frozen_at FROM memberships WHERE id=?").get(membership) as any;
+    expect(resumed).toMatchObject({ status: "active", frozen_at: null });
+    expect(resumed.end_date).toBe(resumed.expires_at.slice(0, 10));
+    expect(Math.abs(new Date(resumed.expires_at).getTime() - new Date(original.expires_at).getTime() - 3 * 86400000)).toBeLessThan(2000);
     const history = db.membershipFreezeHistory(membership) as any[];
     expect(history).toHaveLength(1);
     expect(history[0].resumed_at).toBeTruthy();
-    expect(history[0].duration_ms).toBeGreaterThan(0);
+    expect(Math.abs(history[0].duration_ms - 3 * 86400000)).toBeLessThan(2000);
     db.close();
   });
   it("extends the exact expiry timestamp instead of rounding freeze time to days", () => {
