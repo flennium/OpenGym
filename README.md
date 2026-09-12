@@ -6,6 +6,16 @@
 
 OpenGym is an open-source, local-first desktop application for running a gym front desk. Member, membership, attendance, payment, receipt, staff, and backup data stays in one SQLite database on the local machine.
 
+## Screenshots
+
+| Secure staff sign-in | Membership plans |
+| --- | --- |
+| ![PIN-protected staff sign-in](docs/screenshots/staff-sign-in.png) | ![Membership plan management](docs/screenshots/membership-plans.png) |
+
+| Visual reports | Backup and recovery |
+| --- | --- |
+| ![Operational reports and charts](docs/screenshots/reports.png) | ![Backup, restore, and factory-reset controls](docs/screenshots/backup-recovery.png) |
+
 ## Development
 
 Requirements: Node.js 22+ and the native build tools required by Electron/better-sqlite3.
@@ -75,7 +85,5 @@ MIT
 ## Release signing
 
 Local builds are unsigned. GitHub release builds can use Electron Builder's standard signing environment variables once maintainers add Windows and Apple release identities as repository secrets. See [docs/RELEASING.md](docs/RELEASING.md).
-
-Potential future improvements are tracked in [SUGGESTIONS.md](SUGGESTIONS.md).
 
 Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) and report security issues according to [SECURITY.md](SECURITY.md).
