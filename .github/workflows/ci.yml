@@ -17,4 +17,6 @@ jobs:
       - run: npm run build
       - if: runner.os == 'Windows'
         run: npm run test:e2e
+        env:
+          OPENGYM_TEST_COMPACT: "1"
       - run: npm run pack

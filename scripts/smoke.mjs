@@ -15,11 +15,25 @@ try {
     cwd: resolve("."),
   });
   const page = await app.firstWindow();
+  if (process.env.OPENGYM_TEST_COMPACT === "1")
+    await page.setViewportSize({ width: 800, height: 700 });
   page.on("console", (message) => {
     if (message.type() === "error") rendererErrors.push(message.text());
   });
   page.on("pageerror", (error) => rendererErrors.push(error.message));
   await page.waitForLoadState("domcontentloaded");
+  const navigate = async (name) => {
+    const sidebarButton = page.getByRole("button", { name, exact: true }).first();
+    if (await sidebarButton.isVisible().catch(() => false)) {
+      await sidebarButton.click();
+      return;
+    }
+    await page.keyboard.press("Control+K");
+    const search = page.getByLabel("Search commands");
+    await search.waitFor();
+    await search.fill(name);
+    await search.press("Enter");
+  };
   if (await app.evaluate(({ Menu }) => Menu.getApplicationMenu() !== null))
     throw new Error("Electron application menu is still visible");
   await page
@@ -73,7 +87,7 @@ try {
   if (memberSaveMs > 2000)
     throw new Error(`Member save exceeded 2 seconds: ${memberSaveMs}ms`);
 
-  await page.getByRole("button", { name: "Plans", exact: true }).click();
+  await navigate("Plans");
   try {
     await page.getByRole("heading", { name: "Plans", exact: true }).waitFor({ timeout: 5000 });
   } catch (error) {
@@ -91,7 +105,7 @@ try {
   await page.getByRole("button", { name: "Save plan" }).click();
   await page.getByText("Full gym access").waitFor();
   await page.screenshot({ path: "release/e2e-membership-plans.png", fullPage: true });
-  await page.getByRole("button", { name: "Memberships", exact: true }).click();
+  await navigate("Memberships");
   await page.getByRole("button", { name: "Assign plan" }).click();
   await page.getByRole("button", { name: "Assign plan" }).last().click();
   await page.getByText("Monthly").first().waitFor();
@@ -113,7 +127,7 @@ try {
   await page.getByRole("button", { name: "Resume membership" }).click();
   await page.getByRole("button", { name: "Renew" }).waitFor();
 
-  await page.getByRole("button", { name: "Attendance", exact: true }).click();
+  await navigate("Attendance");
   await page.getByRole("button", { name: "Check in" }).click();
   await page.getByRole("button", { name: "Cancel" }).waitFor();
   if (!(await page.getByRole("button", { name: "Check in now" }).isDisabled())) throw new Error("Quick check-in is enabled before choosing a member");
@@ -133,14 +147,14 @@ try {
     .waitFor();
   await page.getByRole("button", { name: "Close" }).click();
 
-  await page.getByRole("button", { name: "Kiosk", exact: true }).click();
+  await navigate("Kiosk");
   if (await page.getByRole("textbox").count()) throw new Error("Kiosk exposes a manual chip ID field");
   await page.keyboard.type("0000000000");
   await page.keyboard.press("Enter");
   await page.getByRole("alert").getByText("Access denied").waitFor();
   await page.getByText(/Please wait \d+s/).waitFor();
 
-  await page.getByRole("button", { name: "Payments", exact: true }).click();
+  await navigate("Payments");
   await page.getByRole("button", { name: "Record payment" }).click();
   await page.getByLabel("Amount").fill("5000");
   await page.getByRole("button", { name: "Record payment" }).last().click();
@@ -157,7 +171,7 @@ try {
   await page.getByRole("button", { name: "Refund payment" }).click();
   await page.getByText("refunded", { exact: true }).waitFor();
 
-  await page.getByRole("button", { name: "Staff", exact: true }).click();
+  await navigate("Staff");
   await page.getByRole("button", { name: "Add staff" }).click();
   await page.getByLabel("Name").fill("Front Desk Test");
   await page.getByLabel("Six-digit PIN").fill("654321");
@@ -166,12 +180,12 @@ try {
   await page.getByRole("button", { name: "Permissions" }).click();
   await page.getByText("Front Desk", { exact: true }).waitFor();
 
-  await page.getByRole("button", { name: "Audit Log", exact: true }).click();
+  await navigate("Audit Log");
   await page.getByRole("heading", { name: "Audit log" }).waitFor();
   await page.getByText("Accountability across the front desk").waitFor();
   await page.getByLabel("Staff member").selectOption({ label: "Test Owner" });
   await page.getByRole("button", { name: "Apply filters" }).click();
-  await page.getByText("Test Owner", { exact: true }).first().waitFor();
+  await page.locator(".auditTable").getByText("Test Owner", { exact: true }).first().waitFor();
   let auditOverflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   if (auditOverflow > 1) throw new Error(`Audit log overflows desktop by ${auditOverflow}px`);
   await page.screenshot({ path: "release/e2e-audit-desktop.png", fullPage: true });
@@ -184,7 +198,7 @@ try {
   await page.screenshot({ path: "release/e2e-audit-tablet.png", fullPage: true });
   await page.setViewportSize({ width: 1440, height: 900 });
 
-  await page.getByRole("button", { name: "Reports", exact: true }).click();
+  await navigate("Reports");
   await page.getByRole("heading", { name: "Reports" }).waitFor();
   await page.getByText("Daily activity").waitFor();
   await page.getByRole("button", { name: "7 days" }).click();
@@ -194,7 +208,7 @@ try {
   await page.getByRole("button", { name: "Cancel" }).click();
   await page.screenshot({ path: "release/e2e-reports.png", fullPage: true });
 
-  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await navigate("Settings");
   await page.getByRole("button", { name: "Gym & receipts", exact: true }).click();
   await page.getByRole("heading", { name: "Gym identity and receipts" }).waitFor();
   await page.getByLabel("Language and formatting").waitFor();
@@ -211,14 +225,14 @@ try {
   if (settingsAlerts.length) console.log("KIOSK_SETTINGS_ALERTS", settingsAlerts);
   try { await page.getByText("Settings saved.", { exact: true }).waitFor({ timeout: 5000 }); }
   catch (error) { console.log("KIOSK_SETTINGS_STATE", await page.locator("body").innerText()); console.log("RENDERER_ERRORS", rendererErrors); throw error; }
-  await page.getByRole("button", { name: "Kiosk", exact: true }).click();
+  await navigate("Kiosk");
   await page.getByRole("button", { name: "Start presentation mode" }).click();
   if (!(await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isFullScreen()))) throw new Error("Kiosk presentation did not enter fullscreen");
   await page.getByRole("button", { name: "Exit kiosk" }).click();
   await page.getByLabel("Kiosk exit PIN").fill("246810");
   await page.getByRole("button", { name: "Unlock and exit" }).click();
   await page.getByRole("heading", { name: "Member kiosk" }).waitFor();
-  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await navigate("Settings");
   await page.getByRole("button", { name: "Member documents", exact: true }).click();
   await page.getByLabel("Document name").fill("Medical fitness certificate");
   await page.getByRole("button", { name: "Add requirement" }).click();
@@ -232,7 +246,7 @@ try {
   if ((await page.locator("html").getAttribute("data-theme")) !== "Ocean")
     throw new Error("Theme did not apply");
 
-  await page.getByRole("button", { name: "Backup", exact: true }).click();
+  await navigate("Backup");
   await page.getByRole("heading", { name: "Backup & recovery" }).waitFor();
   await page.getByRole("button", { name: "Back up now" }).waitFor();
   await page.getByRole("button", { name: "Choose backup file" }).waitFor();
@@ -253,12 +267,12 @@ try {
     throw new Error("Front Desk unexpectedly received Reports navigation");
   if (await page.getByRole("button", { name: "Audit Log", exact: true }).count())
     throw new Error("Front Desk unexpectedly received Audit Log navigation");
-  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await navigate("Settings");
   await page.getByRole("heading", { name: "Appearance", exact: true }).waitFor();
   if (await page.getByText("Gym details", { exact: true }).count())
     throw new Error("Front Desk unexpectedly received gym settings access");
 
-  await page.getByRole("button", { name: "Plans", exact: true }).click();
+  await navigate("Plans");
   await page.getByRole("heading", { name: "Plans", exact: true }).waitFor();
   await page.setViewportSize({ width: 800, height: 700 });
   await page.getByRole("button", { name: "Open navigation" }).waitFor();
