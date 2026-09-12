@@ -1,0 +1,11 @@
+node_modules/
+dist/
+release/
+coverage/
+output/
+tmp/
+release-confirmations/
+*.db-wal
+*.db-shm
+*.log
+.DS_Store
