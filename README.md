@@ -16,6 +16,10 @@ OpenGym is an open-source, local-first desktop application for running a gym fro
 | --- | --- |
 | ![Operational reports and charts](docs/screenshots/reports.png) | ![Backup, restore, and factory-reset controls](docs/screenshots/backup-recovery.png) |
 
+### Exact freeze accounting
+
+![Membership freeze history with dates, duration, and staff attribution](docs/screenshots/freeze-history.png)
+
 ## Development
 
 Requirements: Node.js 22+ and the native build tools required by Electron/better-sqlite3.

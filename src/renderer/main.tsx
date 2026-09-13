@@ -17,6 +17,8 @@ import {
   LogOut,
   Menu,
   Moon,
+  History,
+  Play,
   Plus,
   RefreshCw,
   Search,
@@ -24,6 +26,7 @@ import {
   ScrollText,
   Settings,
   ShieldCheck,
+  Snowflake,
   TriangleAlert,
   Users,
   X,
@@ -751,7 +754,7 @@ function Memberships({ settings, can }: any) {
     [members, setMembers] = useState<any[]>([]),
     [query, setQuery] = useState(""),
     [modal, setModal] = useState(false),
-    [freezeHistory, setFreezeHistory] = useState<any[] | null>(null);
+    [freezeHistory, setFreezeHistory] = useState<{ periods: any[]; membership: any } | null>(null);
   const load = () =>
     Promise.all([
       api("memberships:list").then(setRows),
@@ -782,15 +785,15 @@ function Memberships({ settings, can }: any) {
           x.plan_name,
           `${x.start_date} → ${x.end_date === "9999-12-31" ? "No expiry" : x.end_date}`,
           x.training_minutes_limit == null ? "Unlimited" : `${(x.used_minutes / 60).toFixed(1)} / ${(x.training_minutes_limit / 60).toFixed(1)} hr`,
-          <Badge text={x.effective_status || x.status} />,
+          <div className="membershipStatus"><Badge text={x.effective_status || x.status} />{x.status === "frozen" && <small><Snowflake /> Paused for {formatDuration(x.frozen_duration_ms)}</small>}</div>,
           money(x.price_minor, settings),
-          <div className="actions">
-            {x.freeze_count > 0 && <button onClick={async () => setFreezeHistory(await api("memberships:freezeHistory", { id: x.id }))}>Freeze history ({x.freeze_count})</button>}
+          <div className="actions membershipActions">
+            {x.freeze_count > 0 && <button className="historyAction" onClick={async () => setFreezeHistory({ periods: await api("memberships:freezeHistory", { id: x.id }), membership: x })}><History /> History <span>{x.freeze_count}</span></button>}
             {can("Memberships", "edit") && (x.effective_status || x.status) === "active" && (
               <>
                 <button onClick={() => act(x.id, "renew", load)}>Renew</button>
-                <button onClick={() => act(x.id, "freeze", load)}>
-                  Freeze
+                <button className="freezeAction" onClick={() => act(x.id, "freeze", load)}>
+                  <Snowflake /> Freeze
                 </button>
                 <button onClick={() => act(x.id, "cancel", load)}>
                   Cancel
@@ -798,7 +801,7 @@ function Memberships({ settings, can }: any) {
               </>
             )}
             {can("Memberships", "edit") && x.status === "frozen" && (
-              <button onClick={() => act(x.id, "resume", load)}>Resume</button>
+              <button className="resumeAction" onClick={() => act(x.id, "resume", load)}><Play /> Resume</button>
             )}
             {can("Memberships", "edit") && ["expired", "exhausted", "cancelled"].includes(x.effective_status || x.status) && (
               <button onClick={() => act(x.id, "renew", load)}>Renew</button>
@@ -815,8 +818,22 @@ function Memberships({ settings, can }: any) {
           refresh={load}
         />
       )}
-      {freezeHistory && <Modal title="Freeze history" onClose={() => setFreezeHistory(null)}>
-        <div className="freezeTimeline">{freezeHistory.map((period) => <article key={period.id}><span className="timelineDot" /><div><b>{period.resumed_at ? "Completed freeze" : "Currently frozen"}</b><p>{new Date(period.frozen_at).toLocaleString()} → {period.resumed_at ? new Date(period.resumed_at).toLocaleString() : "Now"}</p><small>{formatDuration(period.duration_ms ?? Date.now() - new Date(period.frozen_at).getTime())} paused · by {period.frozen_by_name}{period.resumed_by_name ? `, resumed by ${period.resumed_by_name}` : ""}</small></div></article>)}</div>
+      {freezeHistory && <Modal title="Membership freeze history" className="freezeHistoryModal" onClose={() => setFreezeHistory(null)}>
+        <section className="freezeSummary">
+          <div className="freezeSummaryIcon"><Snowflake /></div>
+          <div><span>{freezeHistory.membership.member_name}</span><strong>{freezeHistory.membership.plan_name}</strong><small>{freezeHistory.membership.start_date} → {freezeHistory.membership.end_date}</small></div>
+          <dl><div><dt>Freeze periods</dt><dd>{freezeHistory.periods.length}</dd></div><div><dt>Total paused</dt><dd>{formatDuration(freezeHistory.membership.frozen_duration_ms)}</dd></div></dl>
+        </section>
+        <div className="freezeLedger">
+          {freezeHistory.periods.map((period, index) => {
+            const running = !period.resumed_at;
+            const duration = period.duration_ms ?? Date.now() - new Date(period.frozen_at).getTime();
+            return <article key={period.id} className={running ? "current" : ""}>
+              <header><span className="freezeIndex">{String(freezeHistory.periods.length - index).padStart(2, "0")}</span><div><b>{running ? "Membership currently frozen" : "Completed freeze period"}</b><small>{running ? "Access and expiry are paused" : "Expiry was extended by this duration"}</small></div><strong className="freezeDuration">{formatDuration(duration)}</strong></header>
+              <dl className="freezeDetails"><div><dt>Frozen</dt><dd>{formatDateTime(period.frozen_at)}</dd></div><div><dt>Resumed</dt><dd>{period.resumed_at ? formatDateTime(period.resumed_at) : "Not resumed"}</dd></div><div><dt>Frozen by</dt><dd>{period.frozen_by_name}</dd></div><div><dt>Resumed by</dt><dd>{period.resumed_by_name || "—"}</dd></div></dl>
+            </article>;
+          })}
+        </div>
       </Modal>}
     </Page>
   );
@@ -826,6 +843,7 @@ const formatDuration = (milliseconds: number) => {
   const days = Math.floor(minutes / 1440), hours = Math.floor((minutes % 1440) / 60), mins = minutes % 60;
   return [days && `${days}d`, hours && `${hours}h`, `${mins}m`].filter(Boolean).join(" ");
 };
+const formatDateTime = (value: string) => new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 function Plans({ settings, can }: any) {
   const [plans, setPlans] = useState<any[]>([]),
     [editing, setEditing] = useState<any>(null);
@@ -886,12 +904,12 @@ const act = async (id: number, action: string, load: any) => {
     freeze: {
       title: "Freeze this membership?",
       message:
-        "The member will remain on record, but the membership will no longer be active until resumed.",
+        "Check-in access stops immediately. The calendar expiry and remaining training hours stay paused until this membership is resumed. This freeze will be recorded in history.",
       label: "Freeze membership",
     },
     resume: {
       title: "Resume this membership?",
-      message: "The frozen membership will become active immediately.",
+      message: "Check-in access returns immediately. The membership expiry will be extended by the exact time it was frozen, and this period will remain in history.",
       label: "Resume membership",
     },
     cancel: {

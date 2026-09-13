@@ -123,9 +123,15 @@ try {
   await page.getByRole("button", { name: "Freeze" }).click();
   await page.getByRole("button", { name: "Freeze membership" }).click();
   await page.getByRole("status").getByText("Membership frozen.").waitFor();
+  await page.screenshot({ path: "release/e2e-membership-frozen.png", fullPage: true });
   await page.getByRole("button", { name: "Resume" }).click();
   await page.getByRole("button", { name: "Resume membership" }).click();
   await page.getByRole("button", { name: "Renew" }).waitFor();
+  await page.getByRole("button", { name: /History/ }).click();
+  await page.getByRole("heading", { name: "Membership freeze history" }).waitFor();
+  await page.getByText("Completed freeze period").waitFor();
+  await page.screenshot({ path: "release/e2e-freeze-history.png", fullPage: true });
+  await page.getByRole("button", { name: "Close" }).click();
 
   await navigate("Attendance");
   await page.getByRole("button", { name: "Check in" }).click();
