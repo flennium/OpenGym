@@ -2,9 +2,11 @@ name: Release installers
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
 jobs:
   package:
     strategy:
+      fail-fast: false
       matrix:
         os: [windows-latest, macos-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
@@ -14,7 +16,13 @@ jobs:
         with: { node-version: 22, cache: npm }
       - run: npm ci
       - run: npm run check
-      - run: npm run dist
+      - name: Package without empty signing variables
+        shell: bash
+        run: |
+          for name in CSC_LINK CSC_KEY_PASSWORD APPLE_ID APPLE_APP_SPECIFIC_PASSWORD APPLE_TEAM_ID; do
+            if [ -z "${!name}" ]; then unset "$name"; fi
+          done
+          npm run dist -- --publish never
         env:
           CSC_LINK: ${{ secrets.CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
