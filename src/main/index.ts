@@ -33,6 +33,8 @@ import {
 let win: BrowserWindow;
 let store: GymDatabase;
 let session: any = null;
+let duplicateLaunchPending = false;
+let duplicatePromptOpen = false;
 const attempts = new Map<number, { n: number; until: number }>();
 const ok = (data: any = null) => ({ ok: true, data });
 const fail = (e: any) => ({
@@ -137,6 +139,26 @@ const applyWindowLogo = () => {
   if (icon.isEmpty()) return;
   win?.setIcon(icon);
   if (process.platform === "darwin") app.dock?.setIcon(icon);
+};
+const showAlreadyRunning = () => {
+  if (!win || win.isDestroyed()) {
+    duplicateLaunchPending = true;
+    return;
+  }
+  if (win.isMinimized()) win.restore();
+  win.show();
+  win.focus();
+  if (duplicatePromptOpen) return;
+  duplicatePromptOpen = true;
+  void dialog.showMessageBox(win, {
+    type: "warning",
+    title: "OpenGym is already running",
+    message: "OpenGym is already open",
+    detail: "The existing window has been brought to the front. OpenGym allows one running instance so your local database stays safe.",
+    buttons: ["Return to OpenGym"],
+    defaultId: 0,
+    noLink: true,
+  }).finally(() => { duplicatePromptOpen = false; });
 };
 function handlers() {
   register("setup:status", () => ({ complete: store.isSetup() }));
@@ -667,6 +689,10 @@ async function create() {
     win.center();
     win.show();
     win.focus();
+    if (duplicateLaunchPending) {
+      duplicateLaunchPending = false;
+      showAlreadyRunning();
+    }
   });
   win.webContents.on("did-fail-load", (_event, code, description) => {
     dialog.showErrorBox("OpenGym could not load", `${description} (${code})`);
@@ -680,10 +706,7 @@ async function create() {
 const singleInstance = app.requestSingleInstanceLock();
 if (!singleInstance) app.quit();
 else app.on("second-instance", () => {
-  if (!win) return;
-  if (win.isMinimized()) win.restore();
-  win.show();
-  win.focus();
+  showAlreadyRunning();
 });
 app
   .whenReady()
