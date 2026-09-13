@@ -2,7 +2,10 @@
   "name": "opengym",
   "version": "0.3.1",
   "description": "Local-first gym management desktop app",
-  "author": "Abderrahmane",
+  "author": {
+    "name": "Abderrahmane",
+    "email": "flennium@users.noreply.github.com"
+  },
   "main": "dist/main/index.js",
   "type": "module",
   "scripts": {

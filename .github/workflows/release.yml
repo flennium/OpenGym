@@ -1,4 +1,6 @@
 name: Release installers
+permissions:
+  contents: write
 on:
   push:
     tags: ["v*"]
@@ -29,7 +31,20 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-      - uses: actions/upload-artifact@v4
-        with:
-          name: OpenGym-${{ runner.os }}
-          path: release/*
+      - name: Upload installers to the GitHub release
+        if: github.event_name == 'push'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo "No GitHub Release exists for $GITHUB_REF_NAME; packaging verification is complete."
+            exit 0
+          fi
+          shopt -s nullglob
+          assets=(release/*.exe release/*.blockmap release/*.dmg release/*.AppImage release/*.deb release/*.yml)
+          if [ ${#assets[@]} -eq 0 ]; then
+            echo "No top-level installer assets were produced."
+            exit 1
+          fi
+          gh release upload "$GITHUB_REF_NAME" "${assets[@]}" --clobber
