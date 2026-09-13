@@ -198,8 +198,24 @@ nav button.active {
   background: transparent;
   color: var(--ink);
 }
-.tableTools { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
-.tableTools > span { flex:none; color:var(--muted); font-size:12px; font-variant-numeric:tabular-nums; }
+.dataToolbar { display:grid; grid-template-columns:minmax(260px,1fr) auto auto; align-items:end; gap:10px; margin-bottom:14px; padding:10px; border:1px solid var(--line); border-radius:10px; background:var(--surface); }
+.dataSearch { position:relative; display:flex; align-items:center; min-width:0; height:42px; border:1px solid var(--line); border-radius:7px; background:var(--canvas); color:var(--muted); }
+.dataSearch:focus-within { border-color:var(--accent); box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 18%,transparent); }
+.dataSearch > svg { flex:none; width:17px; margin-left:12px; }
+.dataSearch label { flex:1; min-width:0; }
+.dataSearch input { width:100%; border:0; outline:0; padding:10px; background:transparent; color:var(--ink); }
+.dataSearch button { display:grid; place-items:center; width:32px; height:32px; margin-right:4px; border:0; border-radius:5px; background:transparent; color:var(--muted); }
+.dataSearch button:hover { background:var(--surface-raised); color:var(--ink); }
+.dataSearch button svg { width:15px; }
+.dataFilters { display:flex; align-items:end; gap:7px; }
+.filterLead { display:flex; align-items:center; gap:5px; height:42px; padding:0 4px; color:var(--muted); font-size:12px; white-space:nowrap; }
+.filterLead svg { width:15px; }
+.dataFilters label { display:grid; gap:3px; }
+.dataFilters label > span { padding-left:2px; color:var(--muted); font-size:10px; }
+.dataFilters select { min-width:112px; height:42px; padding:0 30px 0 10px; border:1px solid var(--line); border-radius:7px; background:var(--canvas); color:var(--ink); }
+.dataToolbarMeta { display:flex; align-items:center; justify-content:flex-end; gap:8px; min-width:95px; height:42px; color:var(--muted); font-size:12px; font-variant-numeric:tabular-nums; }
+.dataToolbarMeta strong { color:var(--ink); }
+.dataToolbarMeta button { border:0; background:transparent; color:var(--accent); padding:6px; font-weight:700; }
 .dialogActions { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:14px; }
 .dialogActions p { margin:0; }
 .formHint { margin:0 0 14px; padding:10px 12px; border:1px solid var(--line); border-radius:7px; background:var(--canvas); color:var(--muted); font-size:13px; line-height:1.45; }
@@ -234,11 +250,9 @@ nav button.active {
 .planEmpty p { margin:0 0 18px; }
 .plansPage { overflow:hidden; border:1px solid var(--line); border-radius:10px; background:var(--surface); }
 .plansPage .planManagerIntro { padding:18px 20px; }
+.planSearch { padding:14px 20px 0; }
+.planSearch .dataToolbar { margin:0; }
 .plansPage .planCatalog { max-height:none; overflow:visible; padding:20px; }
-.searchBox { position:relative; display:flex; align-items:center; width:min(460px,100%); color:var(--muted); }
-.searchBox > svg { position:absolute; left:12px; width:17px; pointer-events:none; }
-.searchBox input { padding-left:38px; padding-right:58px; }
-.searchClear { position:absolute; right:7px; border:0; background:transparent; color:var(--muted); padding:5px; font-size:11px; }
 .srOnly { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
 .tableWrap {
   max-width: 100%;
@@ -1258,6 +1272,9 @@ kbd {
 .kioskMembership .critical { color:#c74343; font-weight:700; }
 
 @media (max-width: 1100px) {
+  .dataToolbar { grid-template-columns:1fr auto; }
+  .dataFilters { grid-row:2; grid-column:1/-1; align-items:end; }
+  .dataToolbarMeta { grid-column:2; grid-row:1; }
   .backupFacts { grid-template-columns:1fr; }
   .recoveryPanel,.resetPanel { align-items:stretch; flex-direction:column; }
   .recoveryPanel > button,.resetPanel > button { align-self:flex-start; }
@@ -1362,6 +1379,12 @@ kbd {
   }
 }
 @media (max-width: 560px) {
+  .dataToolbar { grid-template-columns:1fr; padding:9px; }
+  .dataSearch,.dataToolbarMeta,.dataFilters { grid-column:1; grid-row:auto; }
+  .dataFilters { display:grid; grid-template-columns:1fr 1fr; }
+  .filterLead { grid-column:1/-1; height:auto; padding:4px 2px 0; }
+  .dataFilters select { width:100%; min-width:0; }
+  .dataToolbarMeta { justify-content:space-between; min-height:32px; height:auto; }
   .freezeSummary { grid-template-columns:auto 1fr; padding:16px; }
   .freezeSummary > dl { grid-column:1/-1; padding-top:13px; border-top:1px solid var(--line); }
   .freezeLedger { padding:12px 14px 18px; }
@@ -1375,8 +1398,6 @@ kbd {
   .dashboardMetrics { grid-template-columns:1fr; }
   .dashboardMetrics article+article { border-left:0; border-top:1px solid var(--line); }
   .settingsNav { width:100%; }
-  .tableTools { align-items:stretch; flex-direction:column; }
-  .tableTools > span { align-self:flex-end; }
   .dialogActions { align-items:stretch; flex-direction:column; }
   .planManagerModal { width:calc(100vw - 20px); max-height:calc(100vh - 20px); }
   .planManagerModal > header { padding:18px; }

@@ -1,5 +1,5 @@
 import React, { useEffect, useId, useRef } from "react";
-import { Search } from "lucide-react";
+import { Filter, Search, X } from "lucide-react";
 
 type FieldProps = React.InputHTMLAttributes<HTMLInputElement> & { label: string; error?: string };
 export const Field = React.forwardRef<HTMLInputElement, FieldProps>(({ label, error, id, ...props }, ref) => {
@@ -44,6 +44,13 @@ export function Stat({ label, value }: { label: React.ReactNode; value: React.Re
   return <div className="stat"><span>{label}</span><strong>{value}</strong></div>;
 }
 
-export function SearchBox({ value, onChange, placeholder, label = "Search" }: { value: string; onChange: (value: string) => void; placeholder: string; label?: string }) {
-  return <label className="searchBox"><span className="srOnly">{label}</span><Search aria-hidden="true" /><input type="search" value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} aria-label={label} /><button type="button" className="searchClear" aria-label={`Clear ${label.toLowerCase()}`} hidden={!value} onClick={() => onChange("")}>Clear</button></label>;
+export type DataFilter = { label: string; value: string; onChange: (value: string) => void; options: Array<{ value: string; label: string }> };
+export function DataToolbar({ value, onChange, placeholder, label = "Search", filters = [], shown, total }: { value: string; onChange: (value: string) => void; placeholder: string; label?: string; filters?: DataFilter[]; shown: number; total: number }) {
+  const activeFilters = filters.filter((filter) => filter.value).length;
+  const reset = () => { onChange(""); filters.forEach((filter) => filter.onChange("")); };
+  return <section className="dataToolbar" aria-label={`${label} and filters`}>
+    <div className="dataSearch"><Search aria-hidden="true" /><label><span className="srOnly">{label}</span><input type="search" value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} aria-label={label} /></label>{value && <button type="button" aria-label={`Clear ${label.toLowerCase()}`} onClick={() => onChange("")}><X /></button>}</div>
+    {!!filters.length && <div className="dataFilters"><span className="filterLead"><Filter /> Filter{activeFilters ? ` · ${activeFilters}` : ""}</span>{filters.map((filter) => <label key={filter.label}><span>{filter.label}</span><select aria-label={filter.label} value={filter.value} onChange={(event) => filter.onChange(event.target.value)}><option value="">All</option>{filter.options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>)}</div>}
+    <div className="dataToolbarMeta"><span><strong>{shown}</strong> of {total}</span>{(value || activeFilters > 0) && <button type="button" onClick={reset}>Reset</button>}</div>
+  </section>;
 }

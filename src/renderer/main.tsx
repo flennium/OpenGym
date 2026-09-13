@@ -32,7 +32,7 @@ import {
   X,
 } from "lucide-react";
 import appLogo from "../../logo.png";
-import { Badge, Field, Modal, Page, SearchBox, SelectField, Stat, Table } from "./components/ui";
+import { Badge, DataToolbar, Field, Modal, Page, SelectField, Stat, Table } from "./components/ui";
 import "./styles.css";
 const api = async (channel: string, payload?: unknown) => {
   const r = await window.openGym.invoke(channel, payload);
@@ -605,11 +605,13 @@ function MemberForm({ close, refresh, member }: any) {
 function Members({ settings, user, can }: any) {
   const [rows, setRows] = useState<any[]>([]),
     [search, setSearch] = useState(""),
+    [status, setStatus] = useState(""),
     [editing, setEditing] = useState<any>(null);
-  const load = () => api("members:list", { search }).then(setRows);
+  const load = () => api("members:list", { search: "" }).then(setRows);
   useEffect(() => {
     void load();
-  }, [search]);
+  }, []);
+  const visibleRows = rows.filter((member) => (!status || member.status === status) && [member.first_name,member.last_name,member.phone,member.email,member.member_code].some((value) => String(value || "").toLowerCase().includes(search.trim().toLowerCase())));
   return (
     <Page
       title="Members"
@@ -627,19 +629,10 @@ function Members({ settings, user, can }: any) {
         </div>
       }
     >
-      <div className="toolbar">
-        <div className="search">
-          <Search />
-          <input
-            placeholder="Search name, phone, or 10-digit ID"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-      </div>
+      <DataToolbar label="Search members" value={search} onChange={setSearch} placeholder="Name, phone, email, or chip ID" shown={visibleRows.length} total={rows.length} filters={[{ label: "Member status", value: status, onChange: setStatus, options: [{ value: "active", label: "Active" }, { value: "inactive", label: "Inactive" }, { value: "banned", label: "Banned" }] }]} />
       <Table
         heads={["Member", "Chip ID", "Contact", "Status", "Membership ends", "Actions"]}
-        rows={rows.map((m) => [
+        rows={visibleRows.map((m) => [
           <b>
             {m.first_name} {m.last_name}
           </b>,
@@ -753,6 +746,8 @@ function Memberships({ settings, can }: any) {
     [plans, setPlans] = useState<any[]>([]),
     [members, setMembers] = useState<any[]>([]),
     [query, setQuery] = useState(""),
+    [statusFilter, setStatusFilter] = useState(""),
+    [planFilter, setPlanFilter] = useState(""),
     [modal, setModal] = useState(false),
     [freezeHistory, setFreezeHistory] = useState<{ periods: any[]; membership: any } | null>(null);
   const load = () =>
@@ -764,7 +759,7 @@ function Memberships({ settings, can }: any) {
   useEffect(() => {
     load();
   }, []);
-  const visibleRows = rows.filter((row) => [row.member_name,row.plan_name,row.start_date,row.end_date,row.effective_status || row.status].some((value) => String(value || "").toLowerCase().includes(query.trim().toLowerCase())));
+  const visibleRows = rows.filter((row) => (!statusFilter || (row.effective_status || row.status) === statusFilter) && (!planFilter || String(row.plan_id) === planFilter) && [row.member_name,row.plan_name,row.start_date,row.end_date,row.effective_status || row.status].some((value) => String(value || "").toLowerCase().includes(query.trim().toLowerCase())));
   return (
     <Page
       title="Memberships"
@@ -777,7 +772,7 @@ function Memberships({ settings, can }: any) {
         )
       }
     >
-      <div className="tableTools"><SearchBox label="Search memberships" value={query} onChange={setQuery} placeholder="Search member, plan, status, or date" /><span>{visibleRows.length} of {rows.length}</span></div>
+      <DataToolbar label="Search memberships" value={query} onChange={setQuery} placeholder="Member, plan, status, or date" shown={visibleRows.length} total={rows.length} filters={[{ label: "Status", value: statusFilter, onChange: setStatusFilter, options: ["active","frozen","expired","exhausted","cancelled"].map((value) => ({ value, label: value[0].toUpperCase() + value.slice(1) })) }, { label: "Plan", value: planFilter, onChange: setPlanFilter, options: plans.map((plan) => ({ value: String(plan.id), label: plan.name })) }]} />
       <Table
         heads={["Member", "Plan", "Period", "Training time", "Status", "Amount", "Actions"]}
         rows={visibleRows.map((x) => [
@@ -846,6 +841,8 @@ const formatDuration = (milliseconds: number) => {
 const formatDateTime = (value: string) => new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 function Plans({ settings, can }: any) {
   const [plans, setPlans] = useState<any[]>([]),
+    [query, setQuery] = useState(""),
+    [typeFilter, setTypeFilter] = useState(""),
     [editing, setEditing] = useState<any>(null);
   const refresh = () => api("plans:list").then(setPlans);
   useEffect(() => { void refresh(); }, []);
@@ -853,14 +850,19 @@ function Plans({ settings, can }: any) {
     await refresh();
     setEditing(null);
   };
+  const visiblePlans = plans.filter((plan) => {
+    const type = plan.duration_months > 0 && plan.training_minutes_limit != null ? "hybrid" : plan.duration_months > 0 ? "calendar" : "hours";
+    return (!typeFilter || type === typeFilter) && [plan.name,plan.description].some((value) => String(value || "").toLowerCase().includes(query.trim().toLowerCase()));
+  });
   return (
     <Page title="Plans" action={can("Memberships", "create") && <button className="primary" onClick={() => setEditing({ new: true })}><Plus />Create plan</button>}>
       <section className="plansPage">
         <div className="planManagerIntro">
           <div><strong>{plans.length} active plan{plans.length === 1 ? "" : "s"}</strong><p>Create and maintain the access packages staff can assign to members.</p></div>
         </div>
+          <div className="planSearch"><DataToolbar label="Search plans" value={query} onChange={setQuery} placeholder="Plan name or description" shown={visiblePlans.length} total={plans.length} filters={[{ label: "Plan type", value: typeFilter, onChange: setTypeFilter, options: [{ value: "calendar", label: "Calendar only" }, { value: "hours", label: "Hours only" }, { value: "hybrid", label: "Calendar + hours" }] }]} /></div>
           <div className="planCatalog">
-            {plans.map((plan: any) => {
+            {visiblePlans.map((plan: any) => {
               const hasMonths = plan.duration_months > 0;
               const hasHours = plan.training_minutes_limit != null;
               const type = hasMonths && hasHours ? "Calendar + hours" : hasMonths ? "Calendar access" : "Training hours";
@@ -883,7 +885,7 @@ function Plans({ settings, can }: any) {
                 </footer>
               </article>;
             })}
-            {!plans.length && <div className="planEmpty"><CalendarClock /><h3>No plans yet</h3><p>Create the first plan to start assigning memberships.</p>{can("Memberships", "create") && <button className="primary" onClick={() => setEditing({ new: true })}>Create plan</button>}</div>}
+            {!visiblePlans.length && <div className="planEmpty"><CalendarClock /><h3>{plans.length ? "No plans match" : "No plans yet"}</h3><p>{plans.length ? "Change the search or reset the active filter." : "Create the first plan to start assigning memberships."}</p>{!plans.length && can("Memberships", "create") && <button className="primary" onClick={() => setEditing({ new: true })}>Create plan</button>}</div>}
           </div>
       </section>
       {editing && <PlanForm plan={editing.new ? null : editing} close={() => setEditing(null)} refresh={reload} />}
@@ -992,7 +994,9 @@ function Assign({ members, plans, close, refresh }: any) {
 function Attendance({ can }: any) {
   const [rows, setRows] = useState<any[]>([]),
     [members, setMembers] = useState<any[]>([]),
-    [query, setQuery] = useState("");
+    [query, setQuery] = useState(""),
+    [statusFilter, setStatusFilter] = useState(""),
+    [methodFilter, setMethodFilter] = useState("");
   const load = () =>
     Promise.all([
       api("attendance:list").then(setRows),
@@ -1001,7 +1005,7 @@ function Attendance({ can }: any) {
   useEffect(() => {
     load();
   }, []);
-  const visibleRows = rows.filter((row) => [row.member_name,row.method,row.checked_in_at,row.checked_out_at,row.checked_out_at ? "complete" : "in gym"].some((value) => String(value || "").toLowerCase().includes(query.trim().toLowerCase())));
+  const visibleRows = rows.filter((row) => (!statusFilter || (row.checked_out_at ? "complete" : "in-gym") === statusFilter) && (!methodFilter || row.method === methodFilter) && [row.member_name,row.method,row.checked_in_at,row.checked_out_at,row.checked_out_at ? "complete" : "in gym"].some((value) => String(value || "").toLowerCase().includes(query.trim().toLowerCase())));
   return (
     <Page
       title="Attendance"
@@ -1016,7 +1020,7 @@ function Attendance({ can }: any) {
         </div>
       }
     >
-      <div className="tableTools"><SearchBox label="Search attendance" value={query} onChange={setQuery} placeholder="Search member, status, method, or date" /><span>{visibleRows.length} of {rows.length}</span></div>
+      <DataToolbar label="Search attendance" value={query} onChange={setQuery} placeholder="Member, status, method, or date" shown={visibleRows.length} total={rows.length} filters={[{ label: "Visit status", value: statusFilter, onChange: setStatusFilter, options: [{ value: "in-gym", label: "In gym" }, { value: "complete", label: "Checked out" }] }, { label: "Check-in method", value: methodFilter, onChange: setMethodFilter, options: [{ value: "manual", label: "Front desk" }, { value: "code", label: "Kiosk scanner" }] }]} />
       <Table
         heads={["Member", "Checked in", "Checked out", "Status"]}
         rows={visibleRows.map((x) => [
@@ -1202,6 +1206,8 @@ function Payments({ settings, user, can }: any) {
   const [rows, setRows] = useState<any[]>([]),
     [memberships, setMemberships] = useState<any[]>([]),
     [query, setQuery] = useState(""),
+    [statusFilter, setStatusFilter] = useState(""),
+    [methodFilter, setMethodFilter] = useState(""),
     [open, setOpen] = useState(false);
   const load = () =>
     Promise.all([
@@ -1211,7 +1217,7 @@ function Payments({ settings, user, can }: any) {
   useEffect(() => {
     load();
   }, []);
-  const visibleRows = rows.filter((row) => [row.receipt_number,row.member_name,row.plan_name,row.method,row.status,row.paid_at].some((value) => String(value || "").toLowerCase().includes(query.trim().toLowerCase())));
+  const visibleRows = rows.filter((row) => (!statusFilter || row.status === statusFilter) && (!methodFilter || row.method === methodFilter) && [row.receipt_number,row.member_name,row.plan_name,row.method,row.status,row.paid_at].some((value) => String(value || "").toLowerCase().includes(query.trim().toLowerCase())));
   return (
     <Page
       title="Payments"
@@ -1229,7 +1235,7 @@ function Payments({ settings, user, can }: any) {
         </div>
       }
     >
-      <div className="tableTools"><SearchBox label="Search payments" value={query} onChange={setQuery} placeholder="Search receipt, member, plan, method, or status" /><span>{visibleRows.length} of {rows.length}</span></div>
+      <DataToolbar label="Search payments" value={query} onChange={setQuery} placeholder="Receipt, member, plan, method, or status" shown={visibleRows.length} total={rows.length} filters={[{ label: "Payment status", value: statusFilter, onChange: setStatusFilter, options: [{ value: "paid", label: "Paid" }, { value: "refunded", label: "Refunded" }] }, { label: "Method", value: methodFilter, onChange: setMethodFilter, options: [{ value: "cash", label: "Cash" }, { value: "card", label: "Card" }, { value: "transfer", label: "Transfer" }] }]} />
       <Table
         heads={[
           "Receipt",
