@@ -8,12 +8,12 @@ OpenGym is an open-source, local-first desktop application for running a gym fro
 
 ## Screenshots
 
-| Secure staff sign-in | Membership plans |
-| --- | --- |
+| Secure staff sign-in                                               | Membership plans                                                     |
+| ------------------------------------------------------------------ | -------------------------------------------------------------------- |
 | ![PIN-protected staff sign-in](docs/screenshots/staff-sign-in.png) | ![Membership plan management](docs/screenshots/membership-plans.png) |
 
-| Visual reports | Backup and recovery |
-| --- | --- |
+| Visual reports                                                  | Backup and recovery                                                                  |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | ![Operational reports and charts](docs/screenshots/reports.png) | ![Backup, restore, and factory-reset controls](docs/screenshots/backup-recovery.png) |
 
 ### Exact freeze accounting
@@ -68,7 +68,9 @@ Each payment stores a snapshot of the branding and regional settings used at the
 
 Each new member receives a unique 10-digit numeric chip ID. The **Kiosk** page accepts USB, RFID, NFC, barcode, and QR readers that operate as keyboard/HID scanners, records the visit, and displays the member's plan, expiry, remaining hours, and the gym closing time. The Owner can configure an automatic welcome timeout and a separate six-digit kiosk exit PIN, then start a locked fullscreen presentation from the Kiosk page.
 
-Face recognition is not enabled in this build. It needs an explicit owner-controlled consent, retention, camera, and local-model policy before biometric templates may be stored. The disabled kiosk option makes that boundary visible instead of pretending recognition is configured.
+Face recognition is disabled by default and can be enabled by the Owner. When enabled, staff can enroll a consenting member from the member form and the kiosk offers camera identification alongside chip scanning. Camera frames are processed locally; OpenGym stores a versioned 512-value face template in SQLite and does not retain the enrollment frame.
+
+The bundled `buffalo_sc` models are from the InsightFace project and are intended for non-commercial research and learning use. InsightFace code and pretrained model terms are separate. Do not distribute a commercial OpenGym installation with these weights without obtaining the appropriate model rights. See [InsightFace licensing](https://github.com/deepinsight/insightface#license).
 
 ## Membership freezing
 

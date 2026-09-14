@@ -22,6 +22,10 @@ const allowed = new Set([
   "members:choosePhoto",
   "members:chooseDocument",
   "members:openDocument",
+  "faces:status",
+  "faces:memberStatus",
+  "faces:enroll",
+  "faces:remove",
   "documents:requirements",
   "documents:addRequirement",
   "documents:archiveRequirement",
@@ -54,6 +58,7 @@ const allowed = new Set([
   "export:csv",
   "audit:list",
   "kiosk:checkInByCode",
+  "kiosk:recognizeFace",
   "kiosk:enterPresentation",
   "kiosk:exitPresentation",
 ]);

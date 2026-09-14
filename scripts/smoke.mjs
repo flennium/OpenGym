@@ -234,6 +234,7 @@ try {
   await page.getByLabel("Welcome message timeout (seconds)").fill("6");
   await page.getByLabel("Gym closing time").fill("21:30");
   await page.getByLabel(/Kiosk exit PIN/).fill("246810");
+  await page.getByLabel("Enable face recognition in kiosk").check();
   await page.getByRole("button", { name: "Save changes" }).click();
   await page.getByLabel("Current PIN").fill("123456");
   await page.getByRole("button", { name: "Save changes" }).last().click();
@@ -242,7 +243,12 @@ try {
   if (settingsAlerts.length) console.log("KIOSK_SETTINGS_ALERTS", settingsAlerts);
   try { await page.getByText("Settings saved.", { exact: true }).waitFor({ timeout: 5000 }); }
   catch (error) { console.log("KIOSK_SETTINGS_STATE", await page.locator("body").innerText()); console.log("RENDERER_ERRORS", rendererErrors); throw error; }
+  await navigate("Members");
+  await page.getByRole("button", { name: "Edit" }).first().click();
+  await page.getByRole("button", { name: "Enroll face" }).waitFor();
+  await page.getByRole("button", { name: "Close" }).click();
   await navigate("Kiosk");
+  await page.getByRole("button", { name: "Recognize face" }).waitFor();
   await page.getByRole("button", { name: "Start presentation mode" }).click();
   if (!(await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isFullScreen()))) throw new Error("Kiosk presentation did not enter fullscreen");
   await page.getByRole("button", { name: "Exit kiosk" }).click();
