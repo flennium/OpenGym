@@ -93,3 +93,5 @@ MIT
 Local builds are unsigned. GitHub release builds can use Electron Builder's standard signing environment variables once maintainers add Windows and Apple release identities as repository secrets. See [docs/RELEASING.md](docs/RELEASING.md).
 
 Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) and report security issues according to [SECURITY.md](SECURITY.md).
+
+For module ownership and extension points, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).

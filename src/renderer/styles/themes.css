@@ -1,0 +1,70 @@
+/* Theme layer: all ten palettes share one operational contrast system. */
+:root[data-mode="dark"] {
+  --ink: #edf2f4;
+  --muted: #aab6bd;
+  --canvas: #10171d;
+  --surface: #182129;
+  --surface-raised: #202c35;
+  --sidebar: #0a1015;
+  --sidebar-hover: #26343f;
+  --line: #33414a;
+  color-scheme: dark;
+}
+:root[data-mode="dark"] body,
+:root[data-mode="dark"] .page,
+:root[data-mode="dark"] .gate {
+  background: var(--canvas);
+  color: var(--ink);
+}
+:root[data-mode="dark"] .setup,
+:root[data-mode="dark"] .login,
+:root[data-mode="dark"] .modal,
+:root[data-mode="dark"] .tableWrap,
+:root[data-mode="dark"] .stat,
+:root[data-mode="dark"] .settingsCard,
+:root[data-mode="dark"] .dangerZone,
+:root[data-mode="dark"] input,
+:root[data-mode="dark"] select,
+:root[data-mode="dark"] textarea,
+:root[data-mode="dark"] th,
+:root[data-mode="dark"] td button,
+:root[data-mode="dark"] .actions button,
+:root[data-mode="dark"] .search {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--line);
+}
+:root[data-mode="dark"] th {
+  background: var(--surface-raised);
+  color: var(--muted);
+}
+:root[data-mode="dark"] td {
+  border-color: var(--line);
+}
+aside {
+  background: var(--sidebar);
+}
+nav button:hover {
+  background: var(--sidebar-hover);
+}
+nav button.active,
+.primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.primary:hover {
+  filter: brightness(0.94);
+  background: var(--accent);
+}
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline-color: var(--accent);
+}
+.stat {
+  border-left-color: var(--accent);
+}
+.page {
+  animation: page-in 180ms ease-out;
+}
