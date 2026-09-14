@@ -11,7 +11,12 @@ try {
   const executablePath = process.env.OPENGYM_EXECUTABLE;
   app = await electron.launch({
     ...(executablePath ? { executablePath: resolve(executablePath) } : {}),
-    args: [...(executablePath ? [] : ["."]), `--user-data-dir=${profile}`],
+    args: [
+      ...(executablePath ? [] : ["."]),
+      `--user-data-dir=${profile}`,
+      "--use-fake-device-for-media-stream",
+      "--use-fake-ui-for-media-stream",
+    ],
     cwd: resolve("."),
   });
   const page = await app.firstWindow();
@@ -207,6 +212,7 @@ try {
   if (auditOverflow > 1) throw new Error(`Audit log overflows desktop by ${auditOverflow}px`);
   await page.screenshot({ path: "release/e2e-audit-desktop.png", fullPage: true });
   await page.setViewportSize({ width: 800, height: 700 });
+  await page.waitForTimeout(150);
   await page.waitForTimeout(250);
   auditOverflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   if (auditOverflow > 1) throw new Error(`Audit log overflows tablet by ${auditOverflow}px`);
@@ -245,8 +251,16 @@ try {
   catch (error) { console.log("KIOSK_SETTINGS_STATE", await page.locator("body").innerText()); console.log("RENDERER_ERRORS", rendererErrors); throw error; }
   await navigate("Members");
   await page.getByRole("button", { name: "Edit" }).first().click();
-  await page.getByRole("button", { name: "Enroll face" }).waitFor();
-  await page.getByRole("button", { name: "Close" }).click();
+  await page.getByRole("button", { name: "Enroll face" }).click();
+  await page.getByText("Camera ready", { exact: true }).waitFor();
+  await page.screenshot({ path: "release/e2e-face-enrollment.png", fullPage: true });
+  await page.setViewportSize({ width: 800, height: 700 });
+  if (await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth))
+    throw new Error("Face enrollment overflows the compact viewport");
+  await page.screenshot({ path: "release/e2e-face-enrollment-compact.png", fullPage: true });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.getByRole("button", { name: "Close" }).last().click();
+  await page.getByRole("button", { name: "Close" }).last().click();
   await navigate("Kiosk");
   await page.getByRole("button", { name: "Recognize face" }).waitFor();
   await page.getByRole("button", { name: "Start presentation mode" }).click();

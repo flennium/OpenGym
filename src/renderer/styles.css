@@ -952,7 +952,7 @@ form footer {
   position: fixed;
   inset: 0;
   background: rgba(12, 20, 27, 0.55);
-  z-index: 20;
+  z-index: 80;
   display: grid;
   place-items: center;
   padding: 12px;
@@ -2079,79 +2079,53 @@ textarea:focus-visible {
   background: var(--accent-tint);
   color: var(--accent-ink);
 }
-.faceCapture {
-  display: grid;
-  gap: 15px;
-}
-.cameraViewport {
-  position: relative;
-  overflow: hidden;
-  min-height: 340px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: #070b0d;
-}
-.cameraViewport video {
-  display: block;
-  width: 100%;
-  height: clamp(340px, 55vh, 520px);
-  object-fit: cover;
-  transform: scaleX(-1);
-}
-.faceGuide {
-  position: absolute;
-  inset: 12% 28%;
-  border: 3px solid rgb(255 255 255 / 0.8);
-  border-radius: 48% 48% 44% 44%;
-  box-shadow: 0 0 0 999px rgb(0 0 0 / 0.25);
-  pointer-events: none;
-}
-.faceGuide span {
-  position: absolute;
-  inset: 8px;
-  border: 1px dashed rgb(255 255 255 / 0.45);
-  border-radius: inherit;
-}
-.cameraMessage {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  padding: 30px;
-  background: rgb(7 11 13 / 0.88);
-  color: white;
-  text-align: center;
-}
-.cameraMessage.error {
-  color: #ff9b9b;
-}
-.cameraInstructions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.cameraInstructions > div,
-.consentCheck span {
-  display: grid;
-  gap: 3px;
-}
-.cameraInstructions small,
-.consentCheck small {
-  color: var(--muted);
-}
-.consentCheck {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: start;
-  gap: 10px;
-  padding: 13px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--surface);
-}
-.consentCheck input {
-  margin-top: 3px;
-}
+.modal.faceCaptureModal { width:min(940px,100%); padding:20px; border:1px solid color-mix(in srgb,var(--line) 76%,transparent); }
+.faceCaptureModal > header { padding:2px 4px 16px; }
+.faceCapture { display:grid; grid-template-columns:minmax(0,1.7fr) minmax(250px,.8fr); gap:18px; }
+.cameraStage { min-width:0; }
+.cameraViewport { position:relative; overflow:hidden; min-height:430px; border:1px solid #35434b; border-radius:8px; background:#070b0d; box-shadow:inset 0 0 0 1px rgb(255 255 255 / .025); }
+.cameraViewport video { display:block; width:100%; height:clamp(430px,66vh,620px); object-fit:cover; transform:scaleX(-1); filter:saturate(.82) contrast(1.04); }
+.cameraViewport::after { content:""; position:absolute; inset:0; pointer-events:none; background:linear-gradient(180deg,rgb(5 10 13 / .52),transparent 22%,transparent 72%,rgb(5 10 13 / .68)); }
+.cameraTopline,.cameraFootline { position:absolute; z-index:3; left:18px; right:18px; display:flex; align-items:center; justify-content:space-between; gap:12px; color:#edf3f1; font-size:12px; font-variant-numeric:tabular-nums; }
+.cameraTopline { top:16px; }
+.cameraTopline > span { display:flex; align-items:center; gap:7px; padding:7px 9px; border:1px solid rgb(255 255 255 / .16); border-radius:5px; background:rgb(9 17 21 / .58); backdrop-filter:blur(8px); }
+.cameraTopline svg { width:14px; height:14px; color:#b7e43a; }
+.cameraTopline i { width:7px; height:7px; border-radius:50%; background:#b7e43a; box-shadow:0 0 0 4px rgb(183 228 58 / .16); }
+.cameraTopline .starting i { background:#d8a83e; box-shadow:0 0 0 4px rgb(216 168 62 / .16); }
+.cameraFootline { bottom:17px; }
+.qualityMeter { display:flex; align-items:end; gap:3px; height:17px; }
+.qualityMeter i { display:block; width:4px; border-radius:1px; background:#b7e43a; }
+.qualityMeter i:nth-child(1) { height:7px; opacity:.5; }
+.qualityMeter i:nth-child(2) { height:11px; opacity:.72; }
+.qualityMeter i:nth-child(3) { height:16px; }
+.faceGuide { position:absolute; z-index:2; width:min(58%,360px); height:72%; left:50%; top:50%; overflow:visible; transform:translate(-50%,-48%); pointer-events:none; }
+.faceContour { fill:rgb(7 11 13 / .08); stroke:#eef3f2; stroke-width:2; stroke-dasharray:44 9 17 9; vector-effect:non-scaling-stroke; }
+.faceEyeLine,.faceCenterLine { fill:none; stroke:rgb(255 255 255 / .26); stroke-width:1; stroke-dasharray:3 7; vector-effect:non-scaling-stroke; }
+.faceCorner { fill:none; stroke:#b7e43a; stroke-width:4; stroke-linecap:square; vector-effect:non-scaling-stroke; }
+.cornerOne,.cornerFour { stroke-dasharray:54 34; }
+.cornerTwo,.cornerThree { stroke-dasharray:34 54; }
+.captureBrief { min-width:0; display:flex; flex-direction:column; gap:18px; padding:8px 4px 2px; }
+.captureBriefIntro { display:grid; grid-template-columns:auto 1fr; gap:12px; align-items:start; }
+.captureBriefIntro > div,.privacyNote > div,.consentCheck span { display:grid; gap:4px; }
+.captureBriefIntro b { font-size:18px; }
+.captureBriefIntro small,.privacyNote small,.consentCheck small { color:var(--muted); line-height:1.45; }
+.captureStep { display:grid; place-items:center; width:27px; height:27px; border-radius:50%; background:var(--accent); color:var(--accent-ink); font-weight:800; font-variant-numeric:tabular-nums; }
+.captureChecks { display:grid; gap:11px; margin:0; padding:15px 0; list-style:none; border-block:1px solid var(--line); }
+.captureChecks li { display:grid; grid-template-columns:auto 1fr; align-items:center; gap:9px; color:var(--ink); font-size:13px; }
+.captureChecks i { width:7px; height:7px; border:2px solid var(--accent); transform:rotate(45deg); }
+.privacyNote { display:grid; grid-template-columns:auto 1fr; gap:10px; padding:12px; border-radius:7px; background:var(--surface); }
+.privacyNote svg { width:20px; color:var(--accent); }
+.consentCheck { display:grid; grid-template-columns:auto 1fr; align-items:start; gap:10px; padding:12px; border:1px solid var(--line); border-radius:7px; background:var(--surface); }
+.consentCheck input { margin-top:3px; }
+.captureAction { display:grid; gap:9px; margin-top:auto; }
+.captureAction > small { color:var(--muted); }
+.captureAction button { width:100%; min-height:48px; justify-content:center; }
+.captureFlash { position:absolute; z-index:6; inset:0; background:white; animation:captureFlash .38s ease-out both; pointer-events:none; }
+@keyframes captureFlash { from { opacity:.5; } to { opacity:0; } }
+.cameraLoader { width:24px; height:24px; border:2px solid rgb(255 255 255 / .28); border-top-color:#b7e43a; border-radius:50%; animation:cameraSpin .8s linear infinite; }
+@keyframes cameraSpin { to { transform:rotate(360deg); } }
+.cameraMessage { position:absolute; z-index:7; inset:0; display:grid; grid-auto-flow:column; place-items:center; place-content:center; gap:12px; padding:30px; background:rgb(7 11 13 / .88); color:white; text-align:center; }
+.cameraMessage.error { color:#ff9b9b; }
 .kioskCameraAction {
   margin-top: 16px;
 }
@@ -2822,6 +2796,13 @@ kbd {
 }
 
 @media (max-width: 1100px) {
+  .modal.faceCaptureModal { width:min(720px,100%); }
+  .faceCapture { grid-template-columns:1fr; }
+  .cameraViewport,.cameraViewport video { min-height:360px; height:min(52vh,480px); }
+  .captureBrief { display:grid; grid-template-columns:1fr 1fr; align-items:start; }
+  .captureChecks { grid-column:1; }
+  .privacyNote { grid-column:2; grid-row:1 / span 2; }
+  .captureAction,.consentCheck { grid-column:1 / -1; }
   .dataToolbar {
     grid-template-columns: 1fr auto;
   }
@@ -3039,6 +3020,15 @@ kbd {
   }
 }
 @media (max-width: 560px) {
+  .modal.faceCaptureModal { padding:14px; }
+  .faceCaptureModal > header { padding:4px 2px 13px; }
+  .cameraViewport,.cameraViewport video { min-height:330px; height:48vh; }
+  .cameraTopline,.cameraFootline { left:11px; right:11px; }
+  .cameraTopline > span:last-child { padding:7px; font-size:0; }
+  .cameraTopline > span:last-child svg { width:16px; height:16px; }
+  .faceGuide { width:72%; height:70%; }
+  .captureBrief { display:flex; gap:13px; }
+  .captureChecks { padding:12px 0; }
   .dataToolbar {
     grid-template-columns: 1fr;
     padding: 9px;

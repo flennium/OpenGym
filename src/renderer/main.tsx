@@ -749,6 +749,7 @@ function FaceCapture({
   const [consent, setConsent] = useState(!requireConsent);
   const [cameraError, setCameraError] = useState("");
   const [starting, setStarting] = useState(true);
+  const [processing, setProcessing] = useState(false);
   useEffect(() => {
     let mounted = true;
     navigator.mediaDevices
@@ -780,66 +781,74 @@ function FaceCapture({
       stream.current?.getTracks().forEach((track) => track.stop());
     };
   }, []);
-  const capture = () => {
+  const capture = async () => {
     const source = video.current;
     if (!source?.videoWidth) return;
+    setProcessing(true);
     const canvas = document.createElement("canvas");
     canvas.width = source.videoWidth;
     canvas.height = source.videoHeight;
     canvas.getContext("2d")!.drawImage(source, 0, 0);
-    onCapture(canvas.toDataURL("image/jpeg", 0.9));
+    try {
+      await onCapture(canvas.toDataURL("image/jpeg", 0.9));
+    } finally {
+      setProcessing(false);
+    }
   };
   return (
-    <Modal title={title} onClose={onClose}>
+    <Modal title={title} onClose={onClose} className="faceCaptureModal">
       <div className="faceCapture">
-        <div className="cameraViewport">
-          <video ref={video} muted playsInline />
-          <div className="faceGuide">
-            <span />
+        <section className="cameraStage">
+          <div className="cameraViewport">
+            <video ref={video} muted playsInline />
+            <div className="cameraTopline">
+              <span className={starting ? "starting" : "ready"}>
+                <i /> {starting ? "Connecting" : "Camera ready"}
+              </span>
+              <span><ShieldCheck /> Local only</span>
+            </div>
+            <svg className="faceGuide" viewBox="0 0 360 440" aria-hidden="true">
+              <path className="faceContour" d="M180 42C111 42 76 94 76 168c0 48 17 84 39 110 15 18 24 40 29 65l4 19h64l4-19c5-25 14-47 29-65 22-26 39-62 39-110 0-74-35-126-104-126Z" />
+              <path className="faceEyeLine" d="M105 181h150" />
+              <path className="faceCenterLine" d="M180 102v152" />
+              <path className="faceCorner cornerOne" d="M58 116V72h44" />
+              <path className="faceCorner cornerTwo" d="M258 72h44v44" />
+              <path className="faceCorner cornerThree" d="M58 322v44h44" />
+              <path className="faceCorner cornerFour" d="M258 366h44v-44" />
+            </svg>
+            <div className="cameraFootline">
+              <span>{processing ? "Creating secure template…" : "Hold still and look ahead"}</span>
+              <span className="qualityMeter" aria-hidden="true"><i /><i /><i /></span>
+            </div>
+            {processing && <div className="captureFlash" />}
+            {starting && <div className="cameraMessage"><span className="cameraLoader" />Starting camera…</div>}
+            {cameraError && <div className="cameraMessage error"><TriangleAlert />{cameraError}</div>}
           </div>
-          {starting && <div className="cameraMessage">Starting camera…</div>}
-          {cameraError && (
-            <div className="cameraMessage error">{cameraError}</div>
+        </section>
+        <div className="captureBrief">
+          <div className="captureBriefIntro">
+            <span className="captureStep">1</span>
+            <div><b>Set your position</b><small>Fill the contour naturally. You do not need to touch the screen.</small></div>
+          </div>
+          <ul className="captureChecks">
+            <li><i /> Face the camera directly</li>
+            <li><i /> Keep eyes visible</li>
+            <li><i /> Make sure nobody else is in frame</li>
+          </ul>
+          <div className="privacyNote"><ShieldCheck /><div><b>The image stays here</b><small>OpenGym converts this frame into a numeric face template. The captured frame is not retained.</small></div></div>
+          {requireConsent && (
+            <label className="consentCheck">
+              <input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} />
+              <span><b>Member consent confirmed</b><small>The member agrees to local biometric enrollment.</small></span>
+            </label>
           )}
-        </div>
-        <div className="cameraInstructions">
-          <Camera />
-          <div>
-            <b>Center one face in the frame</b>
-            <small>
-              Look straight ahead. Remove sunglasses and use even lighting.
-            </small>
+          <div className="captureAction">
+            <small>{cameraError ? "Reconnect the camera to continue" : !consent ? "Confirm consent to continue" : "One clear frame is enough"}</small>
+            <button type="button" className="primary" disabled={!consent || starting || processing || !!cameraError} onClick={() => void capture()}>
+              <Camera /> {processing ? "Checking face…" : "Capture face"}
+            </button>
           </div>
         </div>
-        {requireConsent && (
-          <label className="consentCheck">
-            <input
-              type="checkbox"
-              checked={consent}
-              onChange={(event) => setConsent(event.target.checked)}
-            />
-            <span>
-              <b>The member agrees to local biometric enrollment</b>
-              <small>
-                The face template is stored in this OpenGym database and can be
-                removed by the Owner.
-              </small>
-            </span>
-          </label>
-        )}
-        <footer className="modalFooter">
-          <button type="button" onClick={onClose}>
-            Cancel
-          </button>
-          <button
-            type="button"
-            className="primary"
-            disabled={!consent || starting || !!cameraError}
-            onClick={capture}
-          >
-            <Camera /> Capture face
-          </button>
-        </footer>
       </div>
     </Modal>
   );
