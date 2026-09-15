@@ -1,6 +1,6 @@
 {
   "name": "opengym",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Local-first gym management desktop app",
   "author": {
     "name": "Abderrahmane",
@@ -23,8 +23,8 @@
     "test:e2e": "npm run rebuild:electron && npm run build && node scripts/smoke.mjs",
     "check": "npm run typecheck && npm run lint && npm test && npm run build",
     "lint": "eslint .",
-    "pack": "npm run build && electron-builder --dir",
-    "dist": "npm run build && electron-builder"
+    "pack": "npm run rebuild:electron && npm run build && electron-builder --dir",
+    "dist": "npm run rebuild:electron && npm run build && electron-builder"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",

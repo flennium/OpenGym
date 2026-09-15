@@ -31,6 +31,12 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      - name: Smoke test the packaged Windows application
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $env:OPENGYM_EXECUTABLE = (Resolve-Path 'release\win-unpacked\OpenGym.exe').Path
+          node scripts/smoke.mjs
       - name: Upload installers to the GitHub release
         if: github.event_name == 'push'
         shell: bash

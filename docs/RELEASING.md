@@ -1,6 +1,6 @@
 # Releasing OpenGym
 
-Run `npm ci`, `npm run check`, and `npm run dist`. Test the installer on a clean Windows account before publishing it.
+Run `npm ci`, `npm run check`, and `npm run dist`. The `dist` command deliberately rebuilds native modules for Electron after the Node-based test suite, preventing Node/Electron ABI mismatches in packaged apps. The release workflow also runs the full smoke suite against the packaged Windows executable before uploading installers. Test the installer on a clean Windows account before publishing it.
 
 Unsigned installers are suitable for internal testing but will trigger operating-system warnings. Public releases should configure Electron Builder signing secrets:
 
